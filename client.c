@@ -95,6 +95,12 @@ int main(int argc, char const *argv[])
     }
     close_connection(sockfd);
     free(command);
+    if (login_cookie != NULL) {
+    	free(login_cookie);
+    }
+    if (jwt_token != NULL) {
+    	free(jwt_token);
+    }
     return 0;
 }
 
@@ -336,6 +342,7 @@ void get_book() {
    		printf("%s\n", aux);
     }
    	// free allocated memory
+   	free(path);
    	free(message);
    	free(response);
    	free(cookies[0]);
@@ -348,7 +355,7 @@ void add_book() {
 	}
 	char *message;
 	char *response;
-	int i;
+	int i = 0, negative = 0;
 	char **body_data = (char **) malloc(sizeof(char *));
 	body_data[0] = (char *) calloc(600, sizeof(char));
 	char type[10] = POST;	// request type
@@ -364,13 +371,21 @@ void add_book() {
 	scanf("%s", publisher);
 	printf("page_count=");
 	scanf("%s", pages);
-	// check if page_count is a number
-	for (i = 0; i < strlen(pages); i++) {
+	// check if pages is a number
+	if (pages[i] == '-') {
+		negative = 1;
+		i++;
+	}
+	for (; i < strlen(pages); i++) {
 		if (isdigit(pages[i]) == 0) {
-			// print message and return if failed
-			printf("Request failed. 'page_count' must be a number.\n");
+			// return and print message if NaN
+			printf("Request failed. 'pages' must be a number.\n");
 			return;
 		}
+	}
+	if (negative) {
+		printf("Request failed. 'pages' must be positive.\n");
+		return;
 	}
 	// create JSON payload
 	sprintf(body_data[0],
@@ -437,6 +452,7 @@ void delete_book() {
     // handle error if request failed
     handle_error(response);
    	// free allocated memory
+   	free(path);
    	free(message);
    	free(response);
    	free(cookies[0]);
